@@ -3,26 +3,21 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config';
 
+// Importing the container triggers the composition root registration.
+// This must happen before any routes or middleware that use resolved deps.
+import './container';
+
 export function createApp(): Application {
   const app = express();
 
-  // Security headers first — always
   app.use(helmet());
-
-  // CORS
   app.use(cors({ origin: config.cors.origin, credentials: true }));
-
-  // Body parsing
-  app.use(express.json({ limit: '10kb' })); // Limit body size — DoS protection
+  app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-  // Health check — no auth required, no business logic
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
-
-  // Routes will be registered here in Phase 3+
-  // app.use('/api/v1', router);
 
   return app;
 }

@@ -1,11 +1,19 @@
 import { createApp } from './app';
 import { config } from './config';
 import { prismaClient } from './infrastructure/database/prisma.client';
+import { container } from './container';
+import { TOKENS } from './container/tokens';
+import { ILogger } from './common/interfaces/logger.interface';
 
 async function bootstrap(): Promise<void> {
   // Verify DB connection before accepting traffic
   await prismaClient.$connect();
   console.log('✓ Database connected');
+
+  const logger = container.resolve<ILogger>(TOKENS.Logger);
+  logger.info('Container resolved successfully', {
+    bindings: ['Logger', 'PrismaClient', 'UserRepository', 'UserService'],
+  });
 
   const app = createApp();
 
