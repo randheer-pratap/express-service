@@ -2,22 +2,39 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config';
-
-// Importing the container triggers the composition root registration.
-// This must happen before any routes or middleware that use resolved deps.
 import './container';
+
+// Middlewares
+import { requestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
+import { globalErrorHandler } from './common/middlewares/error-handler.middleware';
+import { notFoundHandler } from './common/middlewares/not-found.middleware';
+
+// Routes
+import { createHealthRouter } from './modules/health/health.routes';
 
 export function createApp(): Application {
   const app = express();
 
+  // --- Security (always first) ---
   app.use(helmet());
   app.use(cors({ origin: config.cors.origin, credentials: true }));
+
+  // --- Request parsing ---
   app.use(express.json({ limit: '10kb' }));
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-  app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
+  // --- Observability (before routes so every request is logged) ---
+  app.use(requestLoggerMiddleware);
+
+  // --- Routes ---
+  app.use('/health', createHealthRouter());
+  // app.use('/api/v1', apiRouter); // Phase 6
+
+  // --- Catch-all for unmatched routes (must be after all routes) ---
+  app.use(notFoundHandler);
+
+  // --- Global error handler (must be absolutely last, 4-arg signature) ---
+  app.use(globalErrorHandler);
 
   return app;
 }

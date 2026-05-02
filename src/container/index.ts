@@ -10,7 +10,7 @@ import { UserRepository } from '../modules/user/user.repository';
 
 // Services
 import { UserService } from '../modules/user/user.service';
-
+import { HealthService } from '../modules/health/health.service';
 /**
  * COMPOSITION ROOT
  *
@@ -50,6 +50,11 @@ container.bind(
       c.resolve(TOKENS.UserRepository), // resolves UserRepository
       c.resolve(TOKENS.Logger),
     ),
+);
+
+container.bind(
+  TOKENS.HealthService,
+  (c) => new HealthService(c.resolve(TOKENS.PrismaClient), c.resolve(TOKENS.Logger)),
 );
 
 export { container };

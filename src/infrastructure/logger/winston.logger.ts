@@ -1,16 +1,19 @@
 import winston from 'winston';
+import { AsyncLocalStorage } from 'async_hooks';
 import { ILogger } from '../../common/interfaces/logger.interface';
 import { config } from '../../config';
 
 /**
- * WinstonLogger is the concrete implementation of ILogger.
- * Services that need logging depend on ILogger (the interface),
- * not WinstonLogger (this class). That's the dependency inversion.
+ * AsyncLocalStorage holds a context object for the duration of a
+ * single async call chain (i.e., one HTTP request). Any code that
+ * runs within that chain — middleware, service, repository — can
+ * read the requestId without it being passed as a parameter.
  *
- * Tomorrow if you want to switch to Pino, you implement ILogger
- * with PinoLogger and update one line in the container. Zero
- * changes to any service.
+ * This is exported so the request middleware can set it, and the
+ * logger can read it automatically on every log call.
  */
+export const asyncLocalStorage = new AsyncLocalStorage<{ requestId: string }>();
+
 export class WinstonLogger implements ILogger {
   private readonly logger: winston.Logger;
 
@@ -20,12 +23,17 @@ export class WinstonLogger implements ILogger {
       format: winston.format.combine(
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
-        config.env === 'production'
-          ? winston.format.json() // machine-readable in prod
-          : winston.format.prettyPrint(), // human-readable in dev
+        // Custom format that injects the requestId from async context
+        winston.format((info) => {
+          const store = asyncLocalStorage.getStore();
+          if (store?.requestId) {
+            info['requestId'] = store.requestId;
+          }
+          return info;
+        })(),
+        config.env === 'production' ? winston.format.json() : winston.format.prettyPrint(),
       ),
       transports: [new winston.transports.Console()],
-      // Prevent winston from throwing on unhandled errors
       exitOnError: false,
     });
   }

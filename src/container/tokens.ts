@@ -1,3 +1,5 @@
+import { HealthService } from '../modules/health/health.service';
+
 /**
  * Tokens are the unique keys used to register and resolve dependencies
  * from the IoC container. Using Symbol prevents accidental string key

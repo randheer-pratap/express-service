@@ -6,7 +6,7 @@ import {
   UpdateUserDTO,
 } from '../../common/interfaces/user.interface';
 import { ILogger } from '../../common/interfaces/logger.interface';
-
+import { NotFoundError, ConflictError } from '../../common/errors/http-errors';
 /**
  * UserService: pure business logic. No DB calls here — ever.
  * It calls the repository through the IUserRepository interface.
@@ -35,8 +35,10 @@ export class UserService implements IUserService {
 
     const existing = await this.userRepository.findByEmail(data.email);
     if (existing) {
-      // We'll replace this with a proper AppError in Phase 3
-      throw new Error(`User with email ${data.email} already exists`);
+      throw new ConflictError(
+        `User with email ${data.email} already exists`,
+        'USER_EMAIL_CONFLICT',
+      );
     }
 
     return this.userRepository.create(data);
@@ -47,7 +49,7 @@ export class UserService implements IUserService {
 
     const existing = await this.userRepository.findById(id);
     if (!existing) {
-      throw new Error(`User with id ${id} not found`);
+      throw new NotFoundError('User', id);
     }
 
     return this.userRepository.update(id, data);
