@@ -4,12 +4,15 @@ import { TOKENS } from './tokens';
 // Infrastructure
 import { WinstonLogger } from '../infrastructure/logger/winston.logger';
 import { prismaClient } from '../infrastructure/database/prisma.client';
+import { redisClient } from '../infrastructure/redis/redis.client';
+import { TokenService } from '../infrastructure/auth/token.service';
 
 // Repositories
 import { UserRepository } from '../modules/user/user.repository';
 
 // Services
 import { UserService } from '../modules/user/user.service';
+import { AuthService } from '../modules/auth/auth.service';
 import { HealthService } from '../modules/health/health.service';
 /**
  * COMPOSITION ROOT
@@ -27,8 +30,14 @@ import { HealthService } from '../modules/health/health.service';
 // so we use bindValue to hand it directly to the container.
 container.bindValue(TOKENS.PrismaClient, prismaClient);
 
+// redisClient is already a singleton (constructed before this runs),
+container.bindValue(TOKENS.RedisClient, redisClient);
+
 // Logger: singleton — one logger for the whole app lifetime.
 container.bind(TOKENS.Logger, () => new WinstonLogger());
+
+// --- Token service (depends on Redis only) ---
+container.bind(TOKENS.TokenService, (c) => new TokenService(c.resolve(TOKENS.RedisClient)));
 
 // --- Repositories ---
 // The factory receives the container (`c`) and resolves its own
@@ -53,8 +62,23 @@ container.bind(
 );
 
 container.bind(
+  TOKENS.AuthService,
+  (c) =>
+    new AuthService(
+      c.resolve(TOKENS.UserRepository),
+      c.resolve(TOKENS.TokenService),
+      c.resolve(TOKENS.Logger),
+    ),
+);
+
+container.bind(
   TOKENS.HealthService,
-  (c) => new HealthService(c.resolve(TOKENS.PrismaClient), c.resolve(TOKENS.Logger)),
+  (c) =>
+    new HealthService(
+      c.resolve(TOKENS.PrismaClient),
+      c.resolve(TOKENS.RedisClient),
+      c.resolve(TOKENS.Logger),
+    ),
 );
 
 export { container };

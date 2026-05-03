@@ -30,10 +30,8 @@ export class AppError extends Error {
     this.code = code;
     this.details = details;
 
-    // Restore prototype chain — required when extending built-in classes in TS
     Object.setPrototypeOf(this, new.target.prototype);
 
-    // Capture a clean stack trace (excludes the AppError constructor itself)
     Error.captureStackTrace(this, this.constructor);
   }
 }

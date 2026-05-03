@@ -7,12 +7,12 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// ✅ Create PG pool
+// Create PG pool
 const pool = new Pool({
   connectionString: config.db.url,
 });
 
-// ✅ Create adapter
+// Create adapter
 const adapter = new PrismaPg(pool);
 
 export const prismaClient =

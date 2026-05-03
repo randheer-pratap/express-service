@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ILogger } from '../../common/interfaces/logger.interface';
+import { Redis } from 'ioredis';
 
 type ServiceHealth = {
   status: 'healthy' | 'unhealthy';
@@ -28,6 +29,7 @@ type HealthReport = {
 export class HealthService {
   constructor(
     private readonly db: PrismaClient,
+    private readonly redis: Redis,
     private readonly logger: ILogger,
   ) {}
 
@@ -69,8 +71,17 @@ export class HealthService {
   }
 
   private async checkRedis(): Promise<ServiceHealth> {
-    // Redis client will be injected in Phase 8.
-    // Returning healthy as a placeholder — we'll wire this properly then.
-    return { status: 'healthy', latencyMs: 0 };
+    const start = Date.now();
+    try {
+      const pong = await this.redis.ping();
+      if (pong !== 'PONG') throw new Error('Unexpected ping response');
+      return { status: 'healthy', latencyMs: Date.now() - start };
+    } catch (err) {
+      return {
+        status: 'unhealthy',
+        latencyMs: Date.now() - start,
+        error: err instanceof Error ? err.message : 'Redis error',
+      };
+    }
   }
 }

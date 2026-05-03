@@ -23,6 +23,8 @@ export const TOKENS = {
 
   // Config
   Config: Symbol('Config'),
+
+  TokenService: Symbol('TokenService'),
 } as const;
 
 export type Token = (typeof TOKENS)[keyof typeof TOKENS];

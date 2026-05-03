@@ -4,11 +4,16 @@ import { prismaClient } from './infrastructure/database/prisma.client';
 import { container } from './container';
 import { TOKENS } from './container/tokens';
 import { ILogger } from './common/interfaces/logger.interface';
+import { redisClient } from './infrastructure/redis/redis.client';
 
 async function bootstrap(): Promise<void> {
   // Verify DB connection before accepting traffic
   await prismaClient.$connect();
   console.log('✓ Database connected');
+
+  // Verify Redis connection before accepting traffic
+  await redisClient.connect();
+  console.log('✓ Redis connected');
 
   const logger = container.resolve<ILogger>(TOKENS.Logger);
   logger.info('Container resolved successfully', {

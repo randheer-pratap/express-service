@@ -25,7 +25,7 @@ export function requestLoggerMiddleware(req: Request, res: Response, next: NextF
   // Attach to request so controllers can access it
   req.requestId = requestId;
 
-  // Send back to client — useful for support tickets ("give me your X-Request-Id")
+  // Send back to client
   res.setHeader('X-Request-Id', requestId);
 
   // Run the rest of the request lifecycle inside the async context
