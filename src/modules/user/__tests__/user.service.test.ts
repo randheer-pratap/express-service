@@ -25,6 +25,7 @@ const mockUserRepository: jest.Mocked<IUserRepository> = {
   create: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
+  findByProviderId: jest.fn(),
 };
 
 // Mock logger — implements the interface, does nothing

@@ -40,6 +40,28 @@ export const config = {
   cors: {
     origin: optionalEnv('CORS_ORIGIN', 'http://localhost:3001'),
   },
+
+  oauth: {
+    google: {
+      clientId: requireEnv('GOOGLE_CLIENT_ID'),
+      clientSecret: requireEnv('GOOGLE_CLIENT_SECRET'),
+      callbackUrl: optionalEnv(
+        'GOOGLE_CALLBACK_URL',
+        'http://localhost:3001/api/v1/auth/google/callback',
+      ),
+    },
+    github: {
+      clientId: requireEnv('GITHUB_CLIENT_ID'),
+      clientSecret: requireEnv('GITHUB_CLIENT_SECRET'),
+      callbackUrl: optionalEnv(
+        'GITHUB_CALLBACK_URL',
+        'http://localhost:3001/api/v1/auth/github/callback',
+      ),
+    },
+    // Where to send the user after OAuth succeeds or fails
+    successRedirect: optionalEnv('OAUTH_SUCCESS_REDIRECT', 'http://localhost:3001/auth/callback'),
+    failureRedirect: optionalEnv('OAUTH_FAILURE_REDIRECT', 'http://localhost:3001/auth/error'),
+  },
 } as const;
 
 export type Config = typeof config;

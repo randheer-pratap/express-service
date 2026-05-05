@@ -12,10 +12,13 @@ model User {
   passwordHash String?   @map("password_hash")
   firstName    String?   @map("first_name")
   lastName     String?   @map("last_name")
-  provider     String    @default("local")   // "local" | "google" | "github"
+  provider     String    @default("local")
   providerId   String?   @map("provider_id")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
+  // Compound index: finding a user by provider + providerId
+  // is the hottest query in the OAuth flow — it must be indexed.
+  @@index([provider, providerId])
   @@map("users")
 }

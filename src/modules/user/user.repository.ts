@@ -48,4 +48,10 @@ export class UserRepository implements IUserRepository {
     this.logger.debug('UserRepository.delete', { id });
     await this.db.user.delete({ where: { id } });
   }
+
+  async findByProviderId(provider: string, providerId: string): Promise<User | null> {
+    return this.db.user.findFirst({
+      where: { provider, providerId },
+    });
+  }
 }

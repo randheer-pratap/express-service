@@ -11,7 +11,8 @@ import { IUserRepository, CreateUserDTO } from '../../common/interfaces/user.int
 import { ILogger } from '../../common/interfaces/logger.interface';
 import { ConflictError, UnauthorizedError } from '../../common/errors/http-errors';
 import { TokenPair } from '../../common/interfaces/token.interface';
-
+import { OAuthProfile, OAuthResult } from '../../common/interfaces/oauth.interface';
+import { ValidationError } from '../../common/errors/http-errors';
 const BCRYPT_ROUNDS = 12; // 12 rounds = ~300ms on modern hardware — the right tradeoff
 
 export class AuthService implements IAuthService {
@@ -134,5 +135,71 @@ export class AuthService implements IAuthService {
   private sanitizeUser(user: User): Omit<User, 'passwordHash'> {
     const { passwordHash: _, ...sanitized } = user;
     return sanitized;
+  }
+
+  async handleOAuthLogin(profile: OAuthProfile): Promise<OAuthResult> {
+    this.logger.info('AuthService.handleOAuthLogin', {
+      provider: profile.provider,
+      providerId: profile.providerId,
+    });
+
+    /**
+     * Account linking strategy:
+     *
+     * 1. Find by providerId first — returning OAuth user (happy path)
+     * 2. Find by email — user registered with password, now using OAuth
+     *    → link the OAuth provider to their existing account
+     * 3. Neither — brand new user, create account
+     *
+     * This means if you sign up with email "x@y.com" and later
+     * "Continue with Google" (same email), you get ONE account
+     * — not two. This is the expected UX.
+     */
+    let user = await this.userRepository.findByProviderId(profile.provider, profile.providerId);
+
+    let isNewUser = false;
+
+    if (!user) {
+      // Try to link to existing account by email
+      const existingByEmail = profile.email
+        ? await this.userRepository.findByEmail(profile.email)
+        : null;
+
+      if (existingByEmail) {
+        // Link OAuth provider to existing password account
+        user = await this.userRepository.update(existingByEmail.id, {
+          provider: profile.provider,
+          providerId: profile.providerId,
+        });
+      } else {
+        // Create a brand new account
+        if (!profile.email) {
+          // GitHub users who hide their email — we can't create an account
+          // without an email because it's our unique identifier.
+          // In production you'd prompt the user to provide one.
+          throw new ValidationError(
+            'OAuth provider did not supply an email address. ' +
+              'Please make your email public on GitHub or use a different login method.',
+          );
+        }
+
+        user = await this.userRepository.create({
+          email: profile.email,
+          provider: profile.provider,
+          providerId: profile.providerId,
+
+          ...(profile.firstName && { firstName: profile.firstName }),
+          ...(profile.lastName && { lastName: profile.lastName }),
+        });
+      }
+    }
+
+    const tokens = await this.tokenService.generateTokenPair(user.id, user.email);
+
+    return {
+      user: this.sanitizeUser(user),
+      tokens,
+      isNewUser,
+    };
   }
 }

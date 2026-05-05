@@ -23,3 +23,8 @@ export interface IUserService {
   updateUser(id: string, data: UpdateUserDTO): Promise<User>;
   deleteUser(id: string): Promise<void>;
 }
+
+export interface IUserRepository extends IRepository<User, CreateUserDTO, UpdateUserDTO> {
+  findByEmail(email: string): Promise<User | null>;
+  findByProviderId(provider: string, providerId: string): Promise<User | null>;
+}

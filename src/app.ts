@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import { config } from './config';
 import './container';
 import cookieParser from 'cookie-parser';
+import passport from 'passport';
+import { registerOAuthStrategies } from './infrastructure/auth/strategies';
 
 // Middlewares
 import { requestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
@@ -26,6 +28,11 @@ export function createApp(): Application {
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
   app.use(cookieParser());
+
+  // Register OAuth strategies before routes
+  // session: false — we use JWTs, not Passport sessions
+  app.use(passport.initialize());
+  registerOAuthStrategies();
 
   // --- Observability (before routes so every request is logged) ---
   app.use(requestLoggerMiddleware);

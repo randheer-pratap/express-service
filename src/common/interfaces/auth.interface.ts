@@ -1,5 +1,6 @@
 import { User } from '@prisma/client';
 import { TokenPair } from './token.interface';
+import { OAuthProfile, OAuthResult } from './oauth.interface';
 
 export type RegisterDTO = {
   email: string;
@@ -24,4 +25,5 @@ export interface IAuthService {
   refresh(refreshToken: string): Promise<TokenPair>;
   logout(refreshToken: string): Promise<void>;
   logoutAll(userId: string): Promise<void>;
+  handleOAuthLogin(profile: OAuthProfile): Promise<OAuthResult>;
 }

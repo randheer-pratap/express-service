@@ -120,17 +120,17 @@ export class AuthController {
     }
   };
 
-  logoutAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      // req.user is set by authGuard — userId is guaranteed here
-      const userId = req.user!.sub;
-      await this.authService.logoutAll(userId);
-      res.clearCookie(REFRESH_COOKIE, { path: '/api/v1/auth/refresh' });
-      res.json(successResponse({ message: 'All sessions revoked' }));
-    } catch (err) {
-      next(err);
-    }
-  };
+  //   logoutAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  //     try {
+  //       // req.user is set by authGuard — userId is guaranteed here
+  //       const userId = req.user!.sub;
+  //       await this.authService.logoutAll(userId);
+  //       res.clearCookie(REFRESH_COOKIE, { path: '/api/v1/auth/refresh' });
+  //       res.json(successResponse({ message: 'All sessions revoked' }));
+  //     } catch (err) {
+  //       next(err);
+  //     }
+  //   };
 
   private setRefreshCookie(res: Response, token: string): void {
     const isProd = process.env['NODE_ENV'] === 'production';
