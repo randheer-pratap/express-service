@@ -36,7 +36,6 @@ export class AuthController {
         string | undefined
       >;
 
-      // Basic presence validation — full Zod validation comes in Phase 6
       if (!email || !password) {
         throw new ValidationError('email and password are required');
       }

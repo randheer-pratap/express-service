@@ -21,8 +21,7 @@ export function authGuard(req: Request, _res: Response, next: NextFunction): voi
     return next(new UnauthorizedError('Missing or malformed Authorization header'));
   }
 
-  const token = authHeader.slice(7); // strip "Bearer "
-
+  const token = authHeader.slice(7);
   try {
     const tokenService = container.resolve<ITokenService>(TOKENS.TokenService);
     const payload = tokenService.verifyAccessToken(token);
